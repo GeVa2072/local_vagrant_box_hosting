@@ -26,13 +26,21 @@ do
     echo "  Box file is $box_file"
 
     # Parse version out of the box file
-    version="`echo $box_file | sed -re "s@^${name}_([.0-9]+).box@\1@g"`"
+    version="`echo $box_file | sed -re "s@^${name}_([.0-9]+)_{0,1}[^.]*.box@\1@g"`"
     if [ "$version" = "" ] || [ "$version" = "$box_file" ]
     then
       echo "Unable to parse version from [ $box_file ]. Please check the required format"
       exit 1
     fi
-    echo "  Parsed name [ $name ] and version [ $version ]"
+
+    # Parse provider if exist out of the box file
+    provider="`echo $box_file | sed -re "s@^${name}_[.0-9]+_(.*).box@\1@g"`"
+    if [ "$provider" = "" ] || [ "$provider" = "$box_file" ]
+    then
+      echo "Unable to parse provider from [ $box_file ]. Using default value [ virtualbox ]"
+      provider="virtualbox"
+    fi
+    echo "  Parsed name [ $name ],  version [ $version ] and provider [ $provider ]"
 
     # Generate sha1 checksum
     echo "  Generating sha1 checksum"
@@ -47,7 +55,7 @@ do
     fi
 
     # Write the json for the current box
-    echo -n "{\"version\":\"$version\",\"providers\":[{\"name\":\"virtualbox\",\"url\":\"http://$cfg_hostname:$cfg_port/vagrant/$name/boxes/$box_file\",\"checksum_type\":\"sha1\",\"checksum\":\"$checksum\"}]}" >> $tmp_manifest_file
+    echo -n "{\"version\":\"$version\",\"providers\":[{\"name\":\"$provider\",\"url\":\"http://$cfg_hostname:$cfg_port/vagrant/$name/boxes/$box_file\",\"checksum_type\":\"sha1\",\"checksum\":\"$checksum\"}]}" >> $tmp_manifest_file
     echo
   done
   echo "]}" >> $tmp_manifest_file
